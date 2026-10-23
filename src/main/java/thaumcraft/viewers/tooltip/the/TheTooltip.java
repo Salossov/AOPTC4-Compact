@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.research.ResearchApi;
-import thaumicenergistics.blocks.ProviderBlockEntity;
 import thaumicenergistics.parts.EssentiaStorageMonitorPart;
 import thaumicenergistics.storage.EssentiaKey;
 
@@ -62,7 +61,7 @@ public final class TheTooltip {
             CompoundTag values = data.getCompound(KEY);
             boolean isProvider = KIND_PROVIDER.equals(values.getString(TAG_TARGET_KIND)) || values.contains(TAG_COLOR, Tag.TAG_STRING);
             if (isProvider) {
-                return tile instanceof ProviderBlockEntity;
+                return isProviderBlockEntity(tile);
             }
             IPart currentPart = resolvePart(tile, side, hitPos);
             if (!(currentPart instanceof EssentiaStorageMonitorPart monitor)) {
@@ -87,7 +86,7 @@ public final class TheTooltip {
     }
 
     public static boolean supports(BlockEntity tile, Direction side, Vec3 hitPos) {
-        if (tile instanceof ProviderBlockEntity) {
+        if (isProviderBlockEntity(tile)) {
             return true;
         }
         return resolvePart(tile, side, hitPos) instanceof EssentiaStorageMonitorPart;
@@ -95,12 +94,11 @@ public final class TheTooltip {
 
     public static void write(CompoundTag data, BlockEntity tile, Direction side, Vec3 hitPos) {
         data.remove(KEY);
-        if (tile instanceof ProviderBlockEntity provider) {
+        if (isProviderBlockEntity(tile)) {
             CompoundTag values = new CompoundTag();
             values.putString(TAG_TARGET_KIND, KIND_PROVIDER);
-            values.putBoolean(TAG_ACTIVE, provider.isActive());
-            var color = provider.getColor();
-            values.putString(TAG_COLOR, color != null ? color.toString() : "TRANSPARENT");
+            values.putBoolean(TAG_ACTIVE, isProviderActive(tile));
+            values.putString(TAG_COLOR, getProviderColor(tile));
             data.put(KEY, values);
             return;
         }
@@ -139,7 +137,7 @@ public final class TheTooltip {
 
         boolean isProvider = KIND_PROVIDER.equals(values.getString(TAG_TARGET_KIND)) || values.contains(TAG_COLOR, Tag.TAG_STRING);
         if (isProvider) {
-            if (!(tile instanceof ProviderBlockEntity)) {
+            if (!isProviderBlockEntity(tile)) {
                 return List.of();
             }
             if (values.contains(TAG_COLOR, Tag.TAG_STRING)) {
@@ -184,6 +182,34 @@ public final class TheTooltip {
             result.add(Component.translatable(locked ? "thaumcraft_viewers.the.locked" : "thaumcraft_viewers.the.unlocked"));
         }
         return List.copyOf(result);
+    }
+
+    public static boolean isProviderBlockEntity(BlockEntity tile) {
+        if (tile == null) return false;
+        String name = tile.getClass().getName();
+        return name.contains("ProviderBlockEntity");
+    }
+
+    private static String getProviderColor(BlockEntity tile) {
+        if (tile == null) return "TRANSPARENT";
+        try {
+            var method = tile.getClass().getMethod("getColor");
+            Object color = method.invoke(tile);
+            return color != null ? color.toString() : "TRANSPARENT";
+        } catch (Throwable t) {
+            return "TRANSPARENT";
+        }
+    }
+
+    private static boolean isProviderActive(BlockEntity tile) {
+        if (tile == null) return false;
+        try {
+            var method = tile.getClass().getMethod("isActive");
+            Object active = method.invoke(tile);
+            return active instanceof Boolean b && b;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private TheTooltip() {}
