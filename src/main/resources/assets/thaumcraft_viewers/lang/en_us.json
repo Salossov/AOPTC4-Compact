@@ -36,5 +36,8 @@
   "thaumcraft_viewers.the.locked": "Locked",
   "thaumcraft_viewers.the.unlocked": "Unlocked",
   "thaumcraft_viewers.the.color": "Color: %s",
+  "thaumcraft_viewers.invalid_menu": "Invalid or inactive container menu.",
+  "thaumcraft_viewers.invalid_recipe": "Unsupported recipe format.",
+  "thaumcraft_viewers.network_unavailable": "ME network unavailable or offline.",
   "config.jade.plugin_thaumicenergistics.devices": "Thaumic Energistics devices"
 }

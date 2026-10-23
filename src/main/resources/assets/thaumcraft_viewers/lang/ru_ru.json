@@ -36,5 +36,8 @@
   "thaumcraft_viewers.the.locked": "Заблокировано",
   "thaumcraft_viewers.the.unlocked": "Не заблокировано",
   "thaumcraft_viewers.the.color": "Цвет: %s",
+  "thaumcraft_viewers.invalid_menu": "Недействительное или неактивное меню контейнера.",
+  "thaumcraft_viewers.invalid_recipe": "Неподдерживаемый формат рецепта.",
+  "thaumcraft_viewers.network_unavailable": "МЭ сеть недоступна или отключена.",
   "config.jade.plugin_thaumicenergistics.devices": "Устройства Thaumic Energistics"
 }
