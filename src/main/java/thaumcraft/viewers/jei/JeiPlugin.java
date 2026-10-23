@@ -164,6 +164,13 @@ public final class JeiPlugin implements IModPlugin {
         aspectPages = new LinkedHashSet<>();
     }
 
+    /** Optional ThE hook: publish terminal text without making ThE depend on JEI classes. */
+    public static boolean setTerminalSearchText(String text) {
+        if (runtime == null || Viewers.emi()) return false;
+        runtime.getIngredientFilter().setFilterText(text);
+        return true;
+    }
+
     public static void refresh(boolean catalog) {
         if (runtime == null || Viewers.emi()) return;
         var manager = runtime.getRecipeManager();
