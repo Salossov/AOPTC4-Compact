@@ -39,9 +39,12 @@ repositories {
     maven { url = 'https://maven2.bai.lol' }
     maven { url = 'https://api.modrinth.com/maven' }
     maven { url = 'https://maven.theillusivec4.top/' }
+    maven { url = 'https://modmaven.dev/' }
 }
 def apiJar = file(providers.gradleProperty('thaumcraftApiJar').getOrElse("libs/thaumcraft-api-${project.thaumcraft_version}.jar"))
 def tinkererJar = file(providers.gradleProperty('tinkererJar').getOrElse('libs/ThaumicTinkerer-1.21.1-1.0.0.jar'))
+def thaumicEnergisticsJar = file(providers.gradleProperty('thaumicEnergisticsJar')
+        .getOrElse('../../../port_addons/ThaumicEnergistics/repo/build/libs/thaumicenergistics-1.21.1-1.1.3.0-port.1.jar'))
 dependencies {
     implementation files(providers.gradleProperty('aopUiJar').getOrElse('libs/aopui-1.21.1-0.7.0.jar'))
     if (findProject(':api') != null) {
@@ -52,6 +55,8 @@ dependencies {
         testImplementation files(apiJar)
     }
     compileOnly files(tinkererJar)
+    compileOnly files(thaumicEnergisticsJar)
+    compileOnly 'org.appliedenergistics:appliedenergistics2:19.2.18:api'
     compileOnly 'mezz.jei:jei-1.21.1-common-api:19.8.4.110'
     compileOnly 'mezz.jei:jei-1.21.1-neoforge-api:19.8.4.110'
     compileOnly 'dev.emi:emi-neoforge:1.1.13+1.21.1:api'
@@ -70,6 +75,10 @@ dependencies {
     if (providers.gradleProperty('withWthit').map { it.toBoolean() }.getOrElse(false)) {
         verificationRuntimeOnly 'mcp.mobius.waila:wthit:neo-12.5.5'
         verificationRuntimeOnly 'lol.bai:badpackets:neo-0.8.2'
+    }
+    if (providers.gradleProperty('withThaumicEnergistics').map { it.toBoolean() }.getOrElse(false)) {
+        verificationRuntimeOnly files(thaumicEnergisticsJar)
+        verificationRuntimeOnly 'org.appliedenergistics:appliedenergistics2:19.2.18'
     }
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

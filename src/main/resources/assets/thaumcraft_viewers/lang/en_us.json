@@ -32,5 +32,8 @@
   "thaumcraft_viewers.undiscovered_research": "Not discovered yet: explore the world and the book.",
   "thaumcraft_viewers.complete_parents": "Complete the prerequisite research first.",
   "thaumcraft_viewers.essentia_contents": "%s: %s essentia",
-  "config.jade.plugin_thaumcraft_viewers.essentia": "Essentia contents"
+  "config.jade.plugin_thaumcraft_viewers.essentia": "Essentia contents",
+  "thaumcraft_viewers.the.locked": "Locked",
+  "thaumcraft_viewers.the.unlocked": "Unlocked",
+  "config.jade.plugin_thaumicenergistics.devices": "Thaumic Energistics devices"
 }

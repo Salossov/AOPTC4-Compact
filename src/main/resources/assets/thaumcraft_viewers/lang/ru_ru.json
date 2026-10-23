@@ -32,5 +32,8 @@
   "thaumcraft_viewers.undiscovered_research": "Ещё не открыто: исследуйте мир и книгу.",
   "thaumcraft_viewers.complete_parents": "Сначала завершите необходимые исследования.",
   "thaumcraft_viewers.essentia_contents": "%s: %s эссенции",
-  "config.jade.plugin_thaumcraft_viewers.essentia": "Содержимое эссенции"
+  "config.jade.plugin_thaumcraft_viewers.essentia": "Содержимое эссенции",
+  "thaumcraft_viewers.the.locked": "Заблокировано",
+  "thaumcraft_viewers.the.unlocked": "Не заблокировано",
+  "config.jade.plugin_thaumicenergistics.devices": "Устройства Thaumic Energistics"
 }

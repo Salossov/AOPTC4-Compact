@@ -9,6 +9,16 @@
       "thaumictinkerer"
     ]
   },
+  "thaumicenergistics:devices": {
+    "entrypoints": {
+      "common": "thaumcraft.viewers.tooltip.the.WthitCompatibility",
+      "client": "thaumcraft.viewers.tooltip.the.WthitClientCompatibility"
+    },
+    "side": "*",
+    "required": [
+      "thaumicenergistics"
+    ]
+  },
   "thaumcraft_viewers:essentia": {
     "entrypoints": {
       "common": "thaumcraft.viewers.tooltip.WthitCoreCompatibility",
