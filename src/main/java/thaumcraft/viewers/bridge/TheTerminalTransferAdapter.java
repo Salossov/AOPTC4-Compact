@@ -81,7 +81,9 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
 
     @Override
     public boolean supportsCrafting(AbstractContainerMenu menu, CraftingRecipe recipe) {
-        return matchesMenu(menu) && recipe != null && (recipe instanceof ShapedRecipe || recipe instanceof ShapelessRecipe);
+        if (!matchesMenu(menu)) return false;
+        if (recipe instanceof ShapedRecipe shaped) return shaped.getWidth() <= 3 && shaped.getHeight() <= 3;
+        return recipe instanceof ShapelessRecipe && recipe.getIngredients().size() <= 9;
     }
 
     @Override

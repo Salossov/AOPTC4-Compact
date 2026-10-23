@@ -18,7 +18,7 @@ public final class WorkbenchTransferAdapter implements MenuTransferAdapter {
 
     @Override
     public boolean matchesMenu(AbstractContainerMenu menu) {
-        return Catalog.arcane(menu);
+        return menu != null && Catalog.arcane(menu);
     }
 
     @Override

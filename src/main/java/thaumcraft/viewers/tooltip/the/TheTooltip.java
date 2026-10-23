@@ -4,9 +4,9 @@ import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.api.parts.PartHelper;
 import appeng.api.parts.SelectedPart;
+import appeng.api.util.AEColor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -193,11 +193,7 @@ public final class TheTooltip {
             if (values.contains(TAG_COLOR, Tag.TAG_STRING)) {
                 String colorName = values.getString(TAG_COLOR);
                 Component colorComp;
-                if ("TRANSPARENT".equalsIgnoreCase(colorName)) {
-                    colorComp = Component.translatableWithFallback("thaumcraft_viewers.the.color.transparent", "Transparent");
-                } else {
-                    colorComp = Component.translatableWithFallback("color.minecraft." + colorName.toLowerCase(Locale.ROOT), colorName);
-                }
+                colorComp = Component.translatable(colorName);
                 result.add(Component.translatable("thaumcraft_viewers.the.color", colorComp));
             }
             return List.copyOf(result);
@@ -316,7 +312,7 @@ public final class TheTooltip {
         try {
             var method = tile.getClass().getMethod("getColor");
             Object color = method.invoke(tile);
-            return color != null ? color.toString() : null;
+            return color instanceof AEColor aeColor ? aeColor.translationKey : null;
         } catch (ReflectiveOperationException | RuntimeException e) {
             return null;
         }

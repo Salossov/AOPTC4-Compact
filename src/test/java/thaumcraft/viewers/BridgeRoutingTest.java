@@ -1,220 +1,111 @@
 package thaumcraft.viewers;
 
-import net.minecraft.network.chat.Component;
+import java.util.*;
+import net.minecraft.SharedConstants;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import thaumcraft.api.crafting.RecipeDisplay;
-import thaumcraft.viewers.bridge.MenuTransferAdapter;
-import thaumcraft.viewers.bridge.TheTerminalTransferAdapter;
-import thaumcraft.viewers.bridge.TransferResult;
-import thaumcraft.viewers.bridge.ViewerTransferBridge;
-import thaumcraft.viewers.bridge.WorkbenchTransferAdapter;
+import thaumcraft.viewers.bridge.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Headless verification fixture for viewer bridge routing, menu matching, and contract invariants.
- * Tests real positive and negative registry-ID, adapter routing, recipe constraints, and dry-run safety.
- * Does not instantiate Minecraft world or network.
- */
+/** Registry-backed routing and recipe-shape checks. Player/network scenarios remain native checks. */
 public final class BridgeRoutingTest {
+    private static int checks;
+    private static void check(boolean value, String message) {
+        checks++;
+        if (!value) throw new AssertionError(message);
+    }
+
+    private static MenuType<FixtureMenu> register(String id) {
+        return Registry.register(BuiltInRegistries.MENU, ResourceLocation.parse(id),
+                new MenuType<>((containerId, inventory) -> new FixtureMenu(null, containerId), FeatureFlags.DEFAULT_FLAGS));
+    }
+
+    private static RecipeDisplay recipe(String id, RecipeDisplay.Kind kind, int size) {
+        return new RecipeDisplay(ResourceLocation.parse(id), ResourceLocation.parse(id), kind, List.of(),
+                Collections.nCopies(size, Ingredient.EMPTY), List.of(), Map.of(), Map.of(), Map.of(),
+                0, 0, List.of(), List.of());
+    }
+
     public static void main(String[] args) {
-        testRegistryIds();
-        testAdaptersRegistered();
-        testWorkbenchAdapterInvariants();
-        testTerminalAdapterInvariants();
-        testRecipeDisplayInvariants();
-        testDryRunSafety();
-        System.out.println("BRIDGE_ROUTING_TEST_PASS");
+        net.neoforged.fml.loading.LoadingModList.of(List.of(), List.of(), List.of(), new ArrayList<>(), Map.of());
+        SharedConstants.tryDetectVersion();
+        var workbenchType = register("thaumcraft:arcane_workbench");
+        var terminalType = register("thaumicenergistics:arcane_crafting_terminal");
+        Bootstrap.bootStrap();
+        var workbenchMenu = new FixtureMenu(workbenchType, 1);
+        var terminalMenu = new FixtureMenu(terminalType, 2);
+        var otherMenu = new FixtureMenu(MenuType.GENERIC_9x1, 3);
+        var workbench = ViewerTransferBridge.workbench();
+        var terminal = ViewerTransferBridge.theTerminal();
+
+        check(TheTerminalTransferAdapter.TERMINAL_MENU_ID.equals(ResourceLocation.parse("thaumicenergistics:arcane_crafting_terminal")), "Real terminal ID");
+        check(WorkbenchTransferAdapter.MENU_ID.equals(ResourceLocation.parse("thaumcraft:arcane_workbench")), "Real workbench ID");
+        check(ViewerTransferBridge.findAdapter(workbenchMenu) == workbench, "Workbench routes to workbench adapter");
+        check(ViewerTransferBridge.findAdapter(terminalMenu) == terminal, "Terminal routes to terminal adapter");
+        check(ViewerTransferBridge.findAdapter(otherMenu) == null, "Unrelated menu does not route");
+        check(ViewerTransferBridge.findAdapter(null) == null, "Null menu does not route");
+        check(!workbench.matchesMenu(null) && !terminal.matchesMenu(null), "Adapters reject null menus");
+        check(!workbench.matchesMenu(terminalMenu) && !terminal.matchesMenu(workbenchMenu), "Adapters stay isolated");
+
+        var arcane9 = recipe("test:arcane", RecipeDisplay.Kind.ARCANE, 9);
+        var arcane8 = recipe("test:short_arcane", RecipeDisplay.Kind.ARCANE, 8);
+        var crucible9 = recipe("test:crucible", RecipeDisplay.Kind.CRUCIBLE, 9);
+        check(workbench.supportsArcane(workbenchMenu, arcane9), "Workbench accepts nine-slot arcane recipe");
+        check(terminal.supportsArcane(terminalMenu, arcane9), "Terminal accepts nine-slot arcane recipe");
+        check(!workbench.supportsArcane(workbenchMenu, arcane8), "Workbench rejects short arcane recipe");
+        check(!terminal.supportsArcane(terminalMenu, arcane8), "Terminal rejects short arcane recipe");
+        check(!workbench.supportsArcane(workbenchMenu, crucible9), "Workbench rejects crucible recipe");
+        check(!terminal.supportsArcane(terminalMenu, crucible9), "Terminal rejects crucible recipe");
+        check(!workbench.supportsArcane(workbenchMenu, null), "Workbench rejects absent recipe");
+        check(!terminal.supportsArcane(terminalMenu, null), "Terminal rejects absent recipe");
+        check(!terminal.supportsArcane(otherMenu, arcane9), "Valid recipe does not bypass menu identity");
+
+        boolean rejectedNullId = false;
+        try {
+            new RecipeDisplay(null, null, RecipeDisplay.Kind.ARCANE, List.of(), List.of(), List.of(),
+                    Map.of(), Map.of(), Map.of(), 0, 0, List.of(), List.of());
+        } catch (NullPointerException expected) {
+            rejectedNullId = true;
+        }
+        check(rejectedNullId, "Public recipe contract rejects null display ID at construction");
+
+        // These calls must reject missing players before attempting any client network send.
+        var before = terminalMenu.getSlot(0).getItem().copy();
+        var carried = terminalMenu.getCarried().copy();
+        var wbCheck = workbench.canTransferArcane(workbenchMenu, arcane9, null, false);
+        var teCheck = terminal.canTransferArcane(terminalMenu, arcane9, null, false);
+        check(!wbCheck.success() && wbCheck.error() != null, "Workbench dry-run reports invalid player");
+        check(!teCheck.success() && teCheck.error() != null, "Terminal dry-run reports invalid player");
+        check(!terminal.canTransferCrafting(terminalMenu, null, null, false).success(), "Null crafting holder rejected");
+        check(!workbench.supportsCrafting(workbenchMenu, null), "Workbench never claims vanilla crafting");
+        check(!workbench.transferArcane(workbenchMenu, arcane9, null, false), "Invalid workbench execution sends nothing");
+        check(!terminal.transferArcane(terminalMenu, arcane9, null, false), "Invalid terminal execution sends nothing");
+        check(!terminal.transferCrafting(terminalMenu, null, null, false), "Invalid vanilla execution sends nothing");
+        check(ItemStack.matches(before, terminalMenu.getSlot(0).getItem()), "Dry-run preserves slot contents");
+        check(ItemStack.matches(carried, terminalMenu.getCarried()), "Dry-run preserves carried stack");
+        System.out.println("BRIDGE_ROUTING_TEST_PASS " + checks);
     }
 
-    private static void testRegistryIds() {
-        ResourceLocation expectedTerminalId = ResourceLocation.parse("thaumicenergistics:arcane_crafting_terminal");
-        if (!TheTerminalTransferAdapter.TERMINAL_MENU_ID.equals(expectedTerminalId)) {
-            throw new AssertionError("TheTerminalTransferAdapter.TERMINAL_MENU_ID must be " + expectedTerminalId
-                    + " but was " + TheTerminalTransferAdapter.TERMINAL_MENU_ID);
+    private static final class FixtureMenu extends AbstractContainerMenu {
+        FixtureMenu(MenuType<?> type, int id) {
+            super(type, id);
+            var inventory = new SimpleContainer(1);
+            inventory.setItem(0, new ItemStack(Items.STONE, 7));
+            addSlot(new Slot(inventory, 0, 0, 0));
         }
-
-        ResourceLocation expectedWorkbenchId = ResourceLocation.parse("thaumcraft:arcane_workbench");
-        if (!WorkbenchTransferAdapter.MENU_ID.equals(expectedWorkbenchId)) {
-            throw new AssertionError("WorkbenchTransferAdapter.MENU_ID must be " + expectedWorkbenchId
-                    + " but was " + WorkbenchTransferAdapter.MENU_ID);
-        }
-    }
-
-    private static void testAdaptersRegistered() {
-        if (ViewerTransferBridge.workbench() == null) {
-            throw new AssertionError("Workbench adapter must not be null");
-        }
-        if (ViewerTransferBridge.theTerminal() == null) {
-            throw new AssertionError("Terminal adapter must not be null");
-        }
-        if (ViewerTransferBridge.findAdapter(null) != null) {
-            throw new AssertionError("Null menu must not match any adapter");
-        }
-    }
-
-    private static void testWorkbenchAdapterInvariants() {
-        WorkbenchTransferAdapter adapter = ViewerTransferBridge.workbench();
-        if (adapter.supportsCrafting(null, null)) {
-            throw new AssertionError("Workbench adapter must never claim support for vanilla crafting");
-        }
-        TransferResult result = adapter.canTransferCrafting(null, null, null, false);
-        if (result.success()) {
-            throw new AssertionError("Workbench adapter must reject vanilla crafting transfer");
-        }
-        if (adapter.supportsArcane(null, null)) {
-            throw new AssertionError("Null recipe must not be supported");
-        }
-        TransferResult nullMenuArcane = adapter.canTransferArcane(null, null, null, false);
-        if (nullMenuArcane.success()) {
-            throw new AssertionError("Workbench adapter must reject null menu for arcane transfer");
-        }
-    }
-
-    private static void testTerminalAdapterInvariants() {
-        TheTerminalTransferAdapter adapter = ViewerTransferBridge.theTerminal();
-        if (adapter.matchesMenu(null)) {
-            throw new AssertionError("Null menu must not match terminal adapter");
-        }
-        if (adapter.supportsArcane(null, null)) {
-            throw new AssertionError("Null arcane recipe must not be supported");
-        }
-        if (adapter.supportsCrafting(null, null)) {
-            throw new AssertionError("Null crafting recipe must not be supported");
-        }
-        TransferResult nullMenuResult = adapter.canTransferArcane(null, null, null, false);
-        if (nullMenuResult.success()) {
-            throw new AssertionError("Terminal adapter must reject null menu");
-        }
-        TransferResult nullMenuCrafting = adapter.canTransferCrafting(null, null, null, false);
-        if (nullMenuCrafting.success()) {
-            throw new AssertionError("Terminal adapter must reject null menu for crafting transfer");
-        }
-    }
-
-    private static void testRecipeDisplayInvariants() {
-        WorkbenchTransferAdapter workbench = ViewerTransferBridge.workbench();
-        TheTerminalTransferAdapter terminal = ViewerTransferBridge.theTerminal();
-
-        List<List<ItemStack>> nineInputs = new ArrayList<>();
-        for (int i = 0; i < 9; i++) {
-            nineInputs.add(List.of(ItemStack.EMPTY));
-        }
-        List<List<ItemStack>> eightInputs = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            eightInputs.add(List.of(ItemStack.EMPTY));
-        }
-
-        RecipeDisplay arcane9WithId = new RecipeDisplay(
-                RecipeDisplay.Kind.ARCANE,
-                ResourceLocation.parse("thaumcraft:test_recipe"),
-                nineInputs,
-                ItemStack.EMPTY,
-                List.of(),
-                0,
-                0,
-                Component.empty(),
-                null
-        );
-
-        RecipeDisplay arcane9WithoutId = new RecipeDisplay(
-                RecipeDisplay.Kind.ARCANE,
-                null,
-                nineInputs,
-                ItemStack.EMPTY,
-                List.of(),
-                0,
-                0,
-                Component.empty(),
-                null
-        );
-
-        RecipeDisplay arcane8WithId = new RecipeDisplay(
-                RecipeDisplay.Kind.ARCANE,
-                ResourceLocation.parse("thaumcraft:test_recipe"),
-                eightInputs,
-                ItemStack.EMPTY,
-                List.of(),
-                0,
-                0,
-                Component.empty(),
-                null
-        );
-
-        RecipeDisplay crucibleWithId = new RecipeDisplay(
-                RecipeDisplay.Kind.CRUCIBLE,
-                ResourceLocation.parse("thaumcraft:test_crucible"),
-                nineInputs,
-                ItemStack.EMPTY,
-                List.of(),
-                0,
-                0,
-                Component.empty(),
-                null
-        );
-
-        // Recipe inputs must be exactly 9
-        if (workbench.supportsArcane(null, arcane8WithId)) {
-            throw new AssertionError("8-input recipe must not be supported for arcane transfer");
-        }
-        if (terminal.supportsArcane(null, arcane8WithId)) {
-            throw new AssertionError("8-input recipe must not be supported for terminal transfer");
-        }
-
-        // Recipe ID must not be null
-        if (workbench.supportsArcane(null, arcane9WithoutId)) {
-            throw new AssertionError("Null recipe ID must not be supported for arcane transfer");
-        }
-        if (terminal.supportsArcane(null, arcane9WithoutId)) {
-            throw new AssertionError("Null recipe ID must not be supported for terminal transfer");
-        }
-
-        // Recipe kind must be ARCANE
-        if (workbench.supportsArcane(null, crucibleWithId)) {
-            throw new AssertionError("Crucible recipe must not be supported by arcane workbench transfer");
-        }
-        if (terminal.supportsArcane(null, crucibleWithId)) {
-            throw new AssertionError("Crucible recipe must not be supported by terminal transfer");
-        }
-    }
-
-    private static void testDryRunSafety() {
-        WorkbenchTransferAdapter workbench = ViewerTransferBridge.workbench();
-        TheTerminalTransferAdapter terminal = ViewerTransferBridge.theTerminal();
-
-        // Dry-run checks should never throw or mutate state
-        TransferResult wbRes = workbench.canTransferArcane(null, null, null, false);
-        if (wbRes.success() || wbRes.error() == null) {
-            throw new AssertionError("Dry-run on invalid workbench state must return failure with error component");
-        }
-
-        TransferResult termArcaneRes = terminal.canTransferArcane(null, null, null, false);
-        if (termArcaneRes.success() || termArcaneRes.error() == null) {
-            throw new AssertionError("Dry-run on invalid terminal state must return failure with error component");
-        }
-
-        TransferResult termCraftRes = terminal.canTransferCrafting(null, null, null, false);
-        if (termCraftRes.success() || termCraftRes.error() == null) {
-            throw new AssertionError("Dry-run on invalid crafting terminal state must return failure with error component");
-        }
-
-        // Transfer execution on invalid inputs must safely return false
-        if (workbench.transferArcane(null, null, null, false)) {
-            throw new AssertionError("transferArcane on null must return false");
-        }
-        if (workbench.transferCrafting(null, null, null, false)) {
-            throw new AssertionError("transferCrafting on workbench must return false");
-        }
-        if (terminal.transferArcane(null, null, null, false)) {
-            throw new AssertionError("transferArcane on null terminal must return false");
-        }
-        if (terminal.transferCrafting(null, null, null, false)) {
-            throw new AssertionError("transferCrafting on null terminal must return false");
-        }
+        @Override public boolean stillValid(Player player) { return true; }
+        @Override public ItemStack quickMoveStack(Player player, int slot) { return ItemStack.EMPTY; }
     }
 
     private BridgeRoutingTest() {}
