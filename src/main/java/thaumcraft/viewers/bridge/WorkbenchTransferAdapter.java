@@ -23,13 +23,16 @@ public final class WorkbenchTransferAdapter implements MenuTransferAdapter {
 
     @Override
     public boolean supportsArcane(AbstractContainerMenu menu, RecipeDisplay recipe) {
-        return matchesMenu(menu) && recipe != null && recipe.kind() == RecipeDisplay.Kind.ARCANE && recipe.inputs().size() == 9;
+        return matchesMenu(menu) && recipe != null && recipe.kind() == RecipeDisplay.Kind.ARCANE && recipe.inputs().size() == 9 && recipe.id() != null;
     }
 
     @Override
     public TransferResult canTransferArcane(AbstractContainerMenu menu, RecipeDisplay recipe, Player player, boolean maximum) {
-        if (!matchesMenu(menu)) {
+        if (!matchesMenu(menu) || player == null || !menu.stillValid(player)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_menu"));
+        }
+        if (!supportsArcane(menu, recipe)) {
+            return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_recipe"));
         }
         if (!Catalog.known(recipe)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.research_required"));

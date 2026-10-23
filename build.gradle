@@ -103,4 +103,10 @@ tasks.register('presentationTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'thaumcraft.viewers.PresentationTest'
 }
-tasks.named('check') { dependsOn 'isolationTest', 'presentationTest', 'verificationClasses' }
+tasks.register('bridgeRoutingTest', JavaExec) {
+    workingDir workspaceRoot
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'thaumcraft.viewers.BridgeRoutingTest'
+}
+tasks.named('check') { dependsOn 'isolationTest', 'presentationTest', 'bridgeRoutingTest', 'verificationClasses' }

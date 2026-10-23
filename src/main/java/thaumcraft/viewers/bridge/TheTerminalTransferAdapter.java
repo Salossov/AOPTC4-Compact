@@ -21,7 +21,7 @@ import thaumcraft.viewers.Catalog;
  * Dispatches intent to the server via action 10 without leaking menu or recipe state.
  */
 public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
-    public static final ResourceLocation TERMINAL_MENU_ID = ResourceLocation.parse("thaumicenergistics:arcane_terminal");
+    public static final ResourceLocation TERMINAL_MENU_ID = ResourceLocation.parse("thaumicenergistics:arcane_crafting_terminal");
     private static final String TERMINAL_MENU_CLASS = "thaumicenergistics.menu.ArcaneTerminalMenu";
     private static final String ACTION_PAYLOAD_CLASS = "thaumicenergistics.network.ArcaneTerminalActionPayload";
 
@@ -40,18 +40,33 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
         return Optional.ofNullable(type);
     }
 
+    public static boolean isPayloadAvailable() {
+        try {
+            Class.forName(ACTION_PAYLOAD_CLASS);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
     @Override
     public boolean supportsArcane(AbstractContainerMenu menu, RecipeDisplay recipe) {
-        return matchesMenu(menu) && recipe != null && recipe.kind() == RecipeDisplay.Kind.ARCANE && recipe.inputs().size() == 9;
+        return matchesMenu(menu) && recipe != null && recipe.kind() == RecipeDisplay.Kind.ARCANE && recipe.inputs().size() == 9 && recipe.id() != null;
     }
 
     @Override
     public TransferResult canTransferArcane(AbstractContainerMenu menu, RecipeDisplay recipe, Player player, boolean maximum) {
-        if (!matchesMenu(menu)) {
+        if (!matchesMenu(menu) || player == null || !menu.stillValid(player)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_menu"));
+        }
+        if (!supportsArcane(menu, recipe)) {
+            return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_recipe"));
         }
         if (!Catalog.known(recipe)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.research_required"));
+        }
+        if (!isPayloadAvailable()) {
+            return TransferResult.fail(Component.translatable("thaumcraft_viewers.network_unavailable"));
         }
         return TransferResult.ok();
     }
@@ -71,11 +86,14 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
 
     @Override
     public TransferResult canTransferCrafting(AbstractContainerMenu menu, RecipeHolder<CraftingRecipe> recipe, Player player, boolean maximum) {
-        if (!matchesMenu(menu)) {
+        if (!matchesMenu(menu) || player == null || !menu.stillValid(player)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_menu"));
         }
-        if (recipe == null || !supportsCrafting(menu, recipe.value())) {
+        if (recipe == null || recipe.id() == null || !supportsCrafting(menu, recipe.value())) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_recipe"));
+        }
+        if (!isPayloadAvailable()) {
+            return TransferResult.fail(Component.translatable("thaumcraft_viewers.network_unavailable"));
         }
         return TransferResult.ok();
     }
@@ -86,16 +104,6 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
             return false;
         }
         return sendAction(menu, recipe.id());
-    }
-
-    public static RecipeHolder<CraftingRecipe> findHolder(Player player, CraftingRecipe recipe) {
-        if (player == null || player.level() == null || recipe == null) return null;
-        for (RecipeHolder<CraftingRecipe> holder : player.level().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
-            if (holder.value() == recipe || holder.value().equals(recipe)) {
-                return holder;
-            }
-        }
-        return null;
     }
 
     public static boolean sendAction(AbstractContainerMenu menu, ResourceLocation recipeId) {
@@ -110,7 +118,7 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
             );
             PacketDistributor.sendToServer(payload);
             return true;
-        } catch (Throwable t) {
+        } catch (ReflectiveOperationException | RuntimeException e) {
             return false;
         }
     }
