@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.research.ResearchApi;
+import thaumicenergistics.blocks.ProviderBlockEntity;
 import thaumicenergistics.parts.EssentiaStorageMonitorPart;
 import thaumicenergistics.storage.EssentiaKey;
 
@@ -22,9 +23,16 @@ import thaumicenergistics.storage.EssentiaKey;
  */
 public final class TheTooltip {
     public static final String KEY = "thaumicenergistics:devices";
+    public static final String TAG_TARGET_KIND = "target_kind";
+    public static final String KIND_MONITOR = "monitor";
+    public static final String KIND_PROVIDER = "provider";
+    public static final String TAG_PART_SIDE = "part_side";
+    public static final String TAG_PART_TYPE = "part_type";
     public static final String TAG_LOCKED = "Locked";
     public static final String TAG_ASPECT = "Aspect";
     public static final String TAG_AMOUNT = "Amount";
+    public static final String TAG_COLOR = "Color";
+    public static final String TAG_ACTIVE = "Active";
 
     /**
      * Resolves the part at the targeted hit location or side.
@@ -50,19 +58,64 @@ public final class TheTooltip {
     }
 
     public static boolean supports(CompoundTag data, BlockEntity tile, Direction side, Vec3 hitPos) {
-        if (data != null && data.contains(KEY, Tag.TAG_COMPOUND)) return true;
+        if (data != null && data.contains(KEY, Tag.TAG_COMPOUND)) {
+            CompoundTag values = data.getCompound(KEY);
+            boolean isProvider = KIND_PROVIDER.equals(values.getString(TAG_TARGET_KIND)) || values.contains(TAG_COLOR, Tag.TAG_STRING);
+            if (isProvider) {
+                return tile instanceof ProviderBlockEntity;
+            }
+            IPart currentPart = resolvePart(tile, side, hitPos);
+            if (!(currentPart instanceof EssentiaStorageMonitorPart monitor)) {
+                return false;
+            }
+            if (values.contains(TAG_PART_SIDE, Tag.TAG_STRING)) {
+                String snapshotSide = values.getString(TAG_PART_SIDE);
+                Direction currentSide = monitor.getSide();
+                if (currentSide != null && !snapshotSide.isEmpty() && !currentSide.getName().equals(snapshotSide)) {
+                    return false;
+                }
+            }
+            if (values.contains(TAG_PART_TYPE, Tag.TAG_STRING)) {
+                String snapshotType = values.getString(TAG_PART_TYPE);
+                if (!snapshotType.isEmpty() && !monitor.getClass().getName().equals(snapshotType)) {
+                    return false;
+                }
+            }
+            return true;
+        }
         return supports(tile, side, hitPos);
     }
 
     public static boolean supports(BlockEntity tile, Direction side, Vec3 hitPos) {
+        if (tile instanceof ProviderBlockEntity) {
+            return true;
+        }
         return resolvePart(tile, side, hitPos) instanceof EssentiaStorageMonitorPart;
     }
 
     public static void write(CompoundTag data, BlockEntity tile, Direction side, Vec3 hitPos) {
         data.remove(KEY);
+        if (tile instanceof ProviderBlockEntity provider) {
+            CompoundTag values = new CompoundTag();
+            values.putString(TAG_TARGET_KIND, KIND_PROVIDER);
+            values.putBoolean(TAG_ACTIVE, provider.isActive());
+            var color = provider.getColor();
+            values.putString(TAG_COLOR, color != null ? color.toString() : "TRANSPARENT");
+            data.put(KEY, values);
+            return;
+        }
+
         IPart part = resolvePart(tile, side, hitPos);
         if (part instanceof EssentiaStorageMonitorPart monitor) {
             CompoundTag values = new CompoundTag();
+            values.putString(TAG_TARGET_KIND, KIND_MONITOR);
+            Direction partSide = monitor.getSide();
+            if (partSide != null) {
+                values.putString(TAG_PART_SIDE, partSide.getName());
+            } else if (side != null) {
+                values.putString(TAG_PART_SIDE, side.getName());
+            }
+            values.putString(TAG_PART_TYPE, monitor.getClass().getName());
             values.putBoolean(TAG_LOCKED, monitor.isLocked());
             EssentiaKey displayed = monitor.getDisplayed();
             if (displayed != null) {
@@ -83,6 +136,38 @@ public final class TheTooltip {
         }
         var result = new ArrayList<Component>();
         CompoundTag values = data.getCompound(KEY);
+
+        boolean isProvider = KIND_PROVIDER.equals(values.getString(TAG_TARGET_KIND)) || values.contains(TAG_COLOR, Tag.TAG_STRING);
+        if (isProvider) {
+            if (!(tile instanceof ProviderBlockEntity)) {
+                return List.of();
+            }
+            if (values.contains(TAG_COLOR, Tag.TAG_STRING)) {
+                String colorName = values.getString(TAG_COLOR);
+                result.add(Component.translatableWithFallback("thaumcraft_viewers.the.color", "Color: " + colorName, colorName));
+            }
+            return List.copyOf(result);
+        }
+
+        // Validate part under crosshair against snapshot on CableBus:
+        IPart currentPart = resolvePart(tile, side, hitPos);
+        if (!(currentPart instanceof EssentiaStorageMonitorPart monitor)) {
+            return List.of();
+        }
+        if (values.contains(TAG_PART_SIDE, Tag.TAG_STRING)) {
+            String snapshotSide = values.getString(TAG_PART_SIDE);
+            Direction currentSide = monitor.getSide();
+            if (currentSide != null && !snapshotSide.isEmpty() && !currentSide.getName().equals(snapshotSide)) {
+                return List.of();
+            }
+        }
+        if (values.contains(TAG_PART_TYPE, Tag.TAG_STRING)) {
+            String snapshotType = values.getString(TAG_PART_TYPE);
+            if (!snapshotType.isEmpty() && !monitor.getClass().getName().equals(snapshotType)) {
+                return List.of();
+            }
+        }
+
         if (values.contains(TAG_ASPECT, Tag.TAG_STRING)) {
             String aspectTag = values.getString(TAG_ASPECT);
             Aspect aspect = Aspect.getAspect(aspectTag);
@@ -94,8 +179,10 @@ public final class TheTooltip {
                 result.add(Component.translatable("thaumcraft_viewers.essentia_contents", name, amount));
             }
         }
-        boolean locked = values.getBoolean(TAG_LOCKED);
-        result.add(Component.translatable(locked ? "thaumcraft_viewers.the.locked" : "thaumcraft_viewers.the.unlocked"));
+        if (values.contains(TAG_LOCKED, Tag.TAG_BYTE)) {
+            boolean locked = values.getBoolean(TAG_LOCKED);
+            result.add(Component.translatable(locked ? "thaumcraft_viewers.the.locked" : "thaumcraft_viewers.the.unlocked"));
+        }
         return List.copyOf(result);
     }
 

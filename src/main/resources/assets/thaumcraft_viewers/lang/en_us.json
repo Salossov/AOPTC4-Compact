@@ -35,5 +35,6 @@
   "config.jade.plugin_thaumcraft_viewers.essentia": "Essentia contents",
   "thaumcraft_viewers.the.locked": "Locked",
   "thaumcraft_viewers.the.unlocked": "Unlocked",
+  "thaumcraft_viewers.the.color": "Color: %s",
   "config.jade.plugin_thaumicenergistics.devices": "Thaumic Energistics devices"
 }
