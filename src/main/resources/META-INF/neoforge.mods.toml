@@ -57,7 +57,7 @@ side="BOTH"
 [[dependencies.thaumcraft_viewers]]
 modId="thaumictinkerer"
 type="optional"
-versionRange="[1.0.0,2)"
+versionRange="[1.0.0,2),[2.5.164-port.1]"
 ordering="AFTER"
 side="BOTH"
 

@@ -40,9 +40,12 @@ public final class BridgeRoutingTest {
     public static void main(String[] args) {
         net.neoforged.fml.loading.LoadingModList.of(List.of(), List.of(), List.of(), new ArrayList<>(), Map.of());
         SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+        // Only this standalone fixture JVM opens its menu registry for test entries.
+        ((net.minecraft.core.MappedRegistry<MenuType<?>>) BuiltInRegistries.MENU).unfreeze();
         var workbenchType = register("thaumcraft:arcane_workbench");
         var terminalType = register("thaumicenergistics:arcane_crafting_terminal");
-        Bootstrap.bootStrap();
+        BuiltInRegistries.MENU.freeze();
         var workbenchMenu = new FixtureMenu(workbenchType, 1);
         var terminalMenu = new FixtureMenu(terminalType, 2);
         var otherMenu = new FixtureMenu(MenuType.GENERIC_9x1, 3);
