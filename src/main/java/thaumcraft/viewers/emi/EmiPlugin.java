@@ -49,7 +49,9 @@ public final class EmiPlugin implements dev.emi.emi.api.EmiPlugin {
         var menu = (MenuType<AbstractContainerMenu>) (MenuType<?>) net.minecraft.core.registries.BuiltInRegistries.MENU.get(net.minecraft.resources.ResourceLocation.parse("thaumcraft:arcane_workbench"));
         registry.addRecipeHandler(menu, new EmiRecipeHandler<AbstractContainerMenu>() {
             public EmiPlayerInventory getInventory(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<AbstractContainerMenu> screen) {
-                return EmiPlayerInventory.of(net.minecraft.client.Minecraft.getInstance().player);
+                // of(player) dispatches to this registered handler again. The
+                // constructor builds the raw player snapshot without redispatch.
+                return new EmiPlayerInventory(net.minecraft.client.Minecraft.getInstance().player);
             }
 
             public boolean supportsRecipe(EmiRecipe recipe) {
@@ -77,7 +79,7 @@ public final class EmiPlugin implements dev.emi.emi.api.EmiPlugin {
             var tMenu = (MenuType<AbstractContainerMenu>) (MenuType<?>) terminalType;
             registry.addRecipeHandler(tMenu, new EmiRecipeHandler<AbstractContainerMenu>() {
                 public EmiPlayerInventory getInventory(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<AbstractContainerMenu> screen) {
-                    return EmiPlayerInventory.of(net.minecraft.client.Minecraft.getInstance().player);
+                    return new EmiPlayerInventory(net.minecraft.client.Minecraft.getInstance().player);
                 }
 
                 public boolean supportsRecipe(EmiRecipe recipe) {

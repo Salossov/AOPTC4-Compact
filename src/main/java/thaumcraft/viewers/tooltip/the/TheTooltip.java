@@ -23,6 +23,7 @@ import thaumicenergistics.storage.EssentiaKey;
  * Shared snapshot and presentation logic for Thaumic Energistics devices in Jade and WTHIT.
  */
 public final class TheTooltip {
+    public static final net.minecraft.resources.ResourceLocation AE_NETWORK_STATUS = net.minecraft.resources.ResourceLocation.parse("ae2:grid_node_state");
     public static final String KEY = "thaumicenergistics:devices";
     public static final String TAG_TARGET_KIND = "target_kind";
     public static final String KIND_MONITOR = "monitor";
@@ -262,6 +263,15 @@ public final class TheTooltip {
             result.add(Component.translatable(locked ? "thaumcraft_viewers.the.locked" : "thaumcraft_viewers.the.unlocked"));
         }
         return List.copyOf(result);
+    }
+
+    /** Modern AE2 supplies the same status for its network tiles. Keep the
+     * release's single status row, while retaining our fallback when its HUD
+     * option is disabled or no authoritative native network state was sent. */
+    public static List<Component> withoutDuplicateNetworkStatus(List<Component> lines, CompoundTag data, boolean nativeStatusEnabled) {
+        if (!nativeStatusEnabled || data == null || !data.contains("gridNodeState", Tag.TAG_BYTE)) return lines;
+        return lines.stream().filter(line -> !(line.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text)
+                || !(text.getKey().equals("thaumcraft_viewers.the.online") || text.getKey().equals("thaumcraft_viewers.the.offline"))).toList();
     }
 
     public static boolean isProviderBlockEntity(BlockEntity tile) {

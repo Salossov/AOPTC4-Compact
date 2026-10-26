@@ -28,11 +28,13 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
     @Override
     public boolean matchesMenu(AbstractContainerMenu menu) {
         if (menu == null) return false;
-        ResourceLocation id = BuiltInRegistries.MENU.getKey(menu.getType());
-        if (id != null && id.equals(TERMINAL_MENU_ID)) {
-            return true;
+        if (menu.getClass().getName().equals(TERMINAL_MENU_CLASS)) return true;
+        try {
+            return TERMINAL_MENU_ID.equals(BuiltInRegistries.MENU.getKey(menu.getType()));
+        } catch (UnsupportedOperationException untypedMenu) {
+            // The player's inventory menu deliberately has no registered MenuType.
+            return false;
         }
-        return menu.getClass().getName().equals(TERMINAL_MENU_CLASS);
     }
 
     public static Optional<MenuType<?>> getMenuType() {
@@ -56,7 +58,7 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
 
     @Override
     public TransferResult canTransferArcane(AbstractContainerMenu menu, RecipeDisplay recipe, Player player, boolean maximum) {
-        if (!matchesMenu(menu) || player == null || !menu.stillValid(player)) {
+        if (!matchesMenu(menu) || player == null || player.containerMenu != menu || !menu.stillValid(player)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_menu"));
         }
         if (!supportsArcane(menu, recipe)) {
@@ -88,7 +90,7 @@ public final class TheTerminalTransferAdapter implements MenuTransferAdapter {
 
     @Override
     public TransferResult canTransferCrafting(AbstractContainerMenu menu, RecipeHolder<CraftingRecipe> recipe, Player player, boolean maximum) {
-        if (!matchesMenu(menu) || player == null || !menu.stillValid(player)) {
+        if (!matchesMenu(menu) || player == null || player.containerMenu != menu || !menu.stillValid(player)) {
             return TransferResult.fail(Component.translatable("thaumcraft_viewers.invalid_menu"));
         }
         if (recipe == null || recipe.id() == null || !supportsCrafting(menu, recipe.value())) {

@@ -21,6 +21,14 @@ public final class JeiPlugin implements IModPlugin {
         return new RecipeType<>(Catalog.id(kind), RecipeDisplay.class);
     }
 
+    private static Class<? extends AbstractContainerMenu> terminalMenuClass() {
+        try {
+            return Class.forName("thaumicenergistics.menu.ArcaneTerminalMenu").asSubclass(AbstractContainerMenu.class);
+        } catch (ClassNotFoundException failure) {
+            throw new IllegalStateException("Registered ThE terminal menu has no implementation class", failure);
+        }
+    }
+
     public ResourceLocation getPluginUid() {
         return ResourceLocation.parse("thaumcraft_viewers:jei");
     }
@@ -93,9 +101,12 @@ public final class JeiPlugin implements IModPlugin {
 
         // 2. Thaumic Energistics Arcane Crafting Terminal handlers
         thaumcraft.viewers.bridge.TheTerminalTransferAdapter.getMenuType().ifPresent(terminalType -> {
+            // JEI indexes transfers by exact menu class, not superclass or MenuType.
+            // Resolve only after the optional ThE menu has actually registered.
+            var terminalClass = terminalMenuClass();
             r.addRecipeTransferHandler(new mezz.jei.api.recipe.transfer.IRecipeTransferHandler<AbstractContainerMenu, RecipeDisplay>() {
                 public Class<? extends AbstractContainerMenu> getContainerClass() {
-                    return AbstractContainerMenu.class;
+                    return terminalClass;
                 }
 
                 @SuppressWarnings("unchecked")
@@ -123,7 +134,7 @@ public final class JeiPlugin implements IModPlugin {
 
             r.addRecipeTransferHandler(new mezz.jei.api.recipe.transfer.IRecipeTransferHandler<AbstractContainerMenu, net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.CraftingRecipe>>() {
                 public Class<? extends AbstractContainerMenu> getContainerClass() {
-                    return AbstractContainerMenu.class;
+                    return terminalClass;
                 }
 
                 @SuppressWarnings("unchecked")
