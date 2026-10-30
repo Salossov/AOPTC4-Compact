@@ -9,7 +9,7 @@ import snownee.jade.api.config.IPluginConfig;
 import thaumic.tinkerer.ThaumicTinkerer;
 import thaumic.tinkerer.block.*;
 
-@WailaPlugin(ThaumicTinkerer.ID)
+@WailaPlugin(ThaumicTinkerer.MOD_ID)
 public final class JadeCompatibility implements IWailaPlugin {
     public static final Provider PROVIDER=new Provider();
     @Override public void register(IWailaCommonRegistration registration) {

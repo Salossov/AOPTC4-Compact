@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import snownee.jade.api.*;
 import snownee.jade.api.config.IPluginConfig;
 
-@WailaPlugin("thaumcraft_viewers")
+@WailaPlugin("thaumcraft_compact")
 public final class JadeCoreCompatibility implements IWailaPlugin {
     public static final Provider PROVIDER = new Provider();
     @Override public void register(IWailaCommonRegistration registration) {

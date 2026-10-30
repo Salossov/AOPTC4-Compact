@@ -4,19 +4,21 @@
 
 **AOP projects:** [Thaumcraft 4](https://github.com/Salossov/AOP-Thaumcraft-4) · [Compact](https://github.com/Salossov/AOPTC4-Compact) · [Thaumic Tinkerer](https://github.com/Salossov/AOPTC4-Thaumic-Tinkerer) · [AOP UI](https://github.com/Salossov/AOP-UI) · [Forbidden Magic](https://github.com/Salossov/AOPTC4-Forbidden-Magic) · [Thaumic Energistics](https://github.com/Salossov/AOPTC4-Thaumic-Energistics)
 
-Optional recipe and tooltip integration for **AOP: Thaumcraft 4**, targeting **Minecraft 1.21.1 / NeoForge**.
+Optional recipe and tooltip integration for [**AOP: Thaumcraft 4**](https://github.com/Salossov/AOP-Thaumcraft-4), targeting **Minecraft 1.21.1 / NeoForge**.
 
 [Русский](README.ru.md) | [Attribution](NOTICE.md)
+NeoForge mod ID: **`thaumcraft_compact`**. Registry and resource namespace: **`thaumcraft_viewers`**. Existing item/block IDs and configuration filenames are retained.
+
 
 ## Overview
 
-AOP:TC4 Compact integrates Thaumcraft recipes with JEI and EMI, and block information with Jade and WTHIT. Thaumic Tinkerer device support activates when the addon is installed.
+AOP:TC4 Compact integrates Thaumcraft recipes with JEI and EMI, and block information with Jade and WTHIT. [Thaumic Tinkerer](https://github.com/Salossov/AOPTC4-Thaumic-Tinkerer) device support activates when the addon is installed.
 
 Recipe displays include research requirements, aspect quantities and vis costs. Unknown aspects remain masked according to configuration. Core block tooltips expose essentia through public container and transport contracts; Tinkerer tooltips include tablet tools, transvector targets, repair state and magnet modes.
 
 ## Compatibility
 
-Java **21**, NeoForge **21.1.252 or newer within 21.1**, a compatible **AOP: Thaumcraft 4 1.0.0** build and **AOP: UI 0.7.x** are required. At least one supported integration is needed to display recipes or tooltips.
+Java **21**, NeoForge **21.1.166 or newer within 21.1**, a compatible [**AOP: Thaumcraft 4 1.1.0**](https://github.com/Salossov/AOP-Thaumcraft-4) build and [**AOP: UI 0.8.x**](https://github.com/Salossov/AOP-UI) are required. At least one supported integration is needed to display recipes or tooltips.
 
 | Integration | Supported range | Purpose |
 | --- | --- | --- |
@@ -29,7 +31,7 @@ All dependencies must target Minecraft 1.21.1 / NeoForge. If both recipe viewers
 
 ## Installation
 
-Install `aoptc4-compact-0.7.0.jar` in the client's `mods` directory alongside the core, AOP: UI and the selected viewers, including their dependencies.
+Install `aoptc4-compact-0.8.0.jar` in the client's `mods` directory alongside the core, AOP: UI and the selected viewers, including their dependencies.
 
 Replace an existing `thaumcraft-viewers` JAR rather than installing both. The runtime ID remains `thaumcraft_viewers` to preserve configuration compatibility.
 
@@ -58,16 +60,17 @@ JDK 21 and compatible AOP: UI, Thaumcraft API and Tinkerer artifacts are require
 
 ```powershell
 $dependencies = @(
-    '-PaopUiJar=C:/dependencies/aopui-1.21.1-0.7.0.jar'
-    '-PthaumcraftApiJar=C:/dependencies/thaumcraft-api-1.0.0.jar'
-    '-PtinkererJar=C:/dependencies/ThaumicTinkerer-1.21.1-1.0.0.jar'
+    '-PaopUiJar=C:/dependencies/aopui-1.21.1-0.8.0.jar'
+    '-PthaumcraftApiJar=C:/dependencies/thaumcraft-api-1.1.0.jar'
+    '-PtinkererJar=C:/dependencies/ThaumicTinkerer-1.21.1-1.1.0.jar'
+    '-PthaumicEnergisticsJar=C:/dependencies/thaumicenergistics-1.21.1-1.0.0.jar'
 )
 ./gradlew.ps1 build @dependencies
 ```
 
 On Linux and macOS, use `sh ./gradlew` with the same Gradle properties. Dependencies may alternatively be placed in `libs/` under the filenames declared in `build.gradle`. Tinkerer is a compile-time dependency for its optional adapter; it is not a runtime requirement. Dependency classes are not bundled.
 
-The gameplay artifact is `build/libs/aoptc4-compact-0.7.0.jar`.
+The gameplay artifact is `build/libs/aoptc4-compact-0.8.0.jar`.
 
 ## Verification
 
@@ -81,7 +84,7 @@ Bug reports should include the core, Compact and viewer versions, reproduction s
 
 In **Actions → Build and release → Run workflow**, enable **release** to publish an ordinary GitHub release with tag `v<version>`. Leave **version** blank to use `mod_version` from `gradle.properties`, or enter `major.minor.patch` to override it for that run. The selected version is used in the JAR metadata, filenames and tag; the workflow does not modify the source files. Prerelease suffixes are rejected in release mode. Existing release tags are never overwritten. Pushes to `main` and manual runs with **release** disabled update the single `nightly` prerelease. Nightly JAR versions use `<mod_version>-nightly.<source_commit>`. Pull requests build artifacts without publishing. Local `act` runs never publish. Ordinary release notes list every commit since the nearest previous ordinary release on the selected history, with commit links and a comparison link. The first release includes the full history. Nightly notes omit this list.
 
-Individual CI and **Build mod suite** use the same build recipes and `aop-suite-manifest.json` format. An individual workflow builds or reuses only its component and required dependencies, then publishes only its own component. The suite can import its JARs from that repository's Releases when source revision and contents, version, toolchain, recipe and dependency checksums match. Repository caches are independent; published JARs provide reuse across repositories. A nightly run accepts matching release or nightly artifacts; an ordinary release accepts only release artifacts, including dependencies. The `force_rebuild` input bypasses ready JARs and preserves Gradle caching. Keep `.github/scripts/suite.py` and `release.py` identical across the four repositories when updating the shared artifact contract.
+Individual CI and **Build mod suite** use the same build recipes and `aop-suite-manifest.json` format. An individual workflow builds or reuses only its component and required dependencies, then publishes only its own component. The suite can import its JARs from that repository's Releases when source revision and contents, version, toolchain, recipe and dependency checksums match. Repository caches are independent; published JARs provide reuse across repositories. A nightly run accepts matching release or nightly artifacts; an ordinary release accepts only release artifacts, including dependencies. The `force_rebuild` input bypasses ready JARs and preserves Gradle caching. Keep `.github/scripts/suite.py`, `suite_bundle.py` and `release.py` identical across the four repositories when updating the shared artifact contract.
 
 For local `act` runs, place compatible dependency source checkouts at `.dependencies/aopui`, `.dependencies/thaumcraft`, `.dependencies/tinkerer` before running `act workflow_dispatch --input release=true`. Local runs use these checkouts and skip GitHub publication. For private dependency repositories, configure the optional `DEPENDENCY_TOKEN` secret with read access to those repositories.
 
@@ -89,14 +92,16 @@ The GitHub workflow runs for source and build changes. Documentation-only change
 
 | Repository variable | Purpose / default |
 | --- | --- |
-| `THAUMCRAFT_REPOSITORY` | Core source; `Salossov/aop-thaumcraft-4` |
+| `THAUMCRAFT_REPOSITORY` | Core source; `Salossov/AOP-Thaumcraft-4` |
 | `THAUMCRAFT_REF` | Core revision; `main` |
-| `TINKERER_REPOSITORY` | Tinkerer source; `Salossov/aoptc4-thaumic-tinkerer` |
+| `TINKERER_REPOSITORY` | Tinkerer source; `Salossov/AOPTC4-Thaumic-Tinkerer` |
 | `TINKERER_REF` | Tinkerer revision; `main` |
-| `AOPUI_REPOSITORY` | AOP: UI source; `Salossov/aop-ui` |
+| `AOPUI_REPOSITORY` | AOP: UI source; `Salossov/AOP-UI` |
 | `AOPUI_REF` | AOP: UI revision; `main` |
 
 Compatible revisions must be selected for all dependencies. Private checkouts require a token with repository read access.
+
+Compact and the complete suite automatically check out and build Thaumic Energistics from source after UI/core and before Compact. No dependency ZIP URL or SHA-256 variables are required. Its source identity and verified JAR checksums participate in Compact’s cache key; this compile dependency is not embedded in Compact. `DEPENDENCY_TOKEN` also needs Contents read access to the ThE repository while it is private. Override its source with `THAUMIC_ENERGISTICS_REPOSITORY` / `THAUMIC_ENERGISTICS_REF`. Local `act` also needs `.dependencies/thaumicenergistics` (or `SUITE_THE_ROOT`). The suite publishes the same four components; ThE remains an independent release.
 
 ## Credits and terms
 

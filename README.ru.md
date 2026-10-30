@@ -4,19 +4,21 @@
 
 **Проекты AOP:** [Thaumcraft 4](https://github.com/Salossov/AOP-Thaumcraft-4) · [Compact](https://github.com/Salossov/AOPTC4-Compact) · [Thaumic Tinkerer](https://github.com/Salossov/AOPTC4-Thaumic-Tinkerer) · [AOP UI](https://github.com/Salossov/AOP-UI) · [Forbidden Magic](https://github.com/Salossov/AOPTC4-Forbidden-Magic) · [Thaumic Energistics](https://github.com/Salossov/AOPTC4-Thaumic-Energistics)
 
-Необязательная интеграция рецептов и подсказок для **AOP: Thaumcraft 4**, **Minecraft 1.21.1 / NeoForge**.
+Необязательная интеграция рецептов и подсказок для [**AOP: Thaumcraft 4**](https://github.com/Salossov/AOP-Thaumcraft-4), **Minecraft 1.21.1 / NeoForge**.
 
 [English](README.md) | [Авторство](NOTICE.md)
+Mod ID NeoForge: **`thaumcraft_compact`**. Namespace реестров и ресурсов: **`thaumcraft_viewers`**. Существующие ID предметов/блоков и имена конфигов сохранены.
+
 
 ## О проекте
 
-AOP:TC4 Compact добавляет рецепты Thaumcraft в JEI и EMI, а сведения о блоках - в Jade и WTHIT. Поддержка устройств Thaumic Tinkerer включается при наличии аддона.
+AOP:TC4 Compact добавляет рецепты Thaumcraft в JEI и EMI, а сведения о блоках - в Jade и WTHIT. Поддержка устройств [Thaumic Tinkerer](https://github.com/Salossov/AOPTC4-Thaumic-Tinkerer) включается при наличии аддона.
 
 Рецепты показывают требования исследований, количество аспектов и стоимость виса. Неизвестные аспекты скрываются в соответствии с настройками. Подсказки ядра отображают эссенцию через публичные контракты контейнеров и труб. Подсказки Tinkerer включают инструмент планшета, цель трансвектора, состояние ремонта и режимы магнитов.
 
 ## Совместимость
 
-Требуются Java **21**, NeoForge **от 21.1.252 в пределах 21.1**, совместимая сборка **AOP: Thaumcraft 4 1.0.0** и **AOP: UI 0.7.x**. Для отображения рецептов или подсказок необходима хотя бы одна поддерживаемая интеграция.
+Требуются Java **21**, NeoForge **от 21.1.166 в пределах 21.1**, совместимая сборка [**AOP: Thaumcraft 4 1.1.0**](https://github.com/Salossov/AOP-Thaumcraft-4) и [**AOP: UI 0.8.x**](https://github.com/Salossov/AOP-UI). Для отображения рецептов или подсказок необходима хотя бы одна поддерживаемая интеграция.
 
 | Интеграция | Поддерживаемый диапазон | Назначение |
 | --- | --- | --- |
@@ -29,7 +31,7 @@ AOP:TC4 Compact добавляет рецепты Thaumcraft в JEI и EMI, а �
 
 ## Установка
 
-Файл `aoptc4-compact-0.7.0.jar` устанавливается в каталог `mods` клиента вместе с ядром, AOP: UI и выбранными просмотрщиками, включая их зависимости.
+Файл `aoptc4-compact-0.8.0.jar` устанавливается в каталог `mods` клиента вместе с ядром, AOP: UI и выбранными просмотрщиками, включая их зависимости.
 
 Существующий JAR `thaumcraft-viewers` необходимо заменить; оба файла одновременно не устанавливаются. Mod ID остаётся `thaumcraft_viewers` для совместимости конфигурации.
 
@@ -58,16 +60,17 @@ PowerShell-обёртка поддерживает локальную рабоч
 
 ```powershell
 $dependencies = @(
-    '-PaopUiJar=C:/dependencies/aopui-1.21.1-0.7.0.jar'
-    '-PthaumcraftApiJar=C:/dependencies/thaumcraft-api-1.0.0.jar'
-    '-PtinkererJar=C:/dependencies/ThaumicTinkerer-1.21.1-1.0.0.jar'
+    '-PaopUiJar=C:/dependencies/aopui-1.21.1-0.8.0.jar'
+    '-PthaumcraftApiJar=C:/dependencies/thaumcraft-api-1.1.0.jar'
+    '-PtinkererJar=C:/dependencies/ThaumicTinkerer-1.21.1-1.1.0.jar'
+    '-PthaumicEnergisticsJar=C:/dependencies/thaumicenergistics-1.21.1-1.0.0.jar'
 )
 ./gradlew.ps1 build @dependencies
 ```
 
 В Linux и macOS используется `sh ./gradlew` с теми же параметрами Gradle. Зависимости также можно разместить в `libs/` с именами из `build.gradle`. Tinkerer требуется при компиляции необязательного адаптера, но не при запуске. Классы зависимостей в результат не включаются.
 
-Игровой артефакт: `build/libs/aoptc4-compact-0.7.0.jar`.
+Игровой артефакт: `build/libs/aoptc4-compact-0.8.0.jar`.
 
 ## Проверки
 
@@ -81,7 +84,7 @@ $dependencies = @(
 
 Для выпуска обычного GitHub Release откройте **Actions → Build and release → Run workflow** и включите **release**. Релиз получает тег `v<версия>`. Пустое поле **version** использует `mod_version` из `gradle.properties`; значение `major.minor.patch` переопределяет версию только для этого запуска. Выбранная версия применяется к метаданным JAR, именам файлов и тегу; исходные файлы workflow не изменяет. Суффиксы предварительных версий в режиме релиза отклоняются. Существующие теги релизов не перезаписываются. Push в `main` и ручной запуск с выключенным **release** обновляют единственный предварительный релиз `nightly`. Версия его JAR имеет вид `<mod_version>-nightly.<коммит исходников>`. Pull request только собирает артефакты без публикации. Локальный `act` ничего не публикует. Заметки обычного релиза содержат все коммиты после ближайшего предыдущего обычного релиза в выбранной истории, ссылки на коммиты и сравнение. Первый релиз включает всю историю. В nightly этот список не добавляется.
 
-Отдельные CI и **Build mod suite** используют одинаковые сборочные команды и формат `aop-suite-manifest.json`. Отдельный workflow собирает или переиспользует свой компонент и необходимые зависимости, но публикует только свой компонент. Комплект может загрузить его JAR из Releases соответствующего репозитория при совпадении ревизии и содержимого исходников, версии, инструментов сборки, сборочных команд и контрольных сумм зависимостей. Кэши репозиториев независимы; обмен готовыми JAR между репозиториями выполняется через Releases. Nightly принимает подходящие релизные и nightly-артефакты, обычный релиз — только релизные, включая зависимости. Параметр `force_rebuild` отключает переиспользование готовых JAR и сохраняет Gradle-кэш. При изменении общего формата артефактов поддерживайте одинаковые `.github/scripts/suite.py` и `release.py` во всех четырёх репозиториях.
+Отдельные CI и **Build mod suite** используют одинаковые сборочные команды и формат `aop-suite-manifest.json`. Отдельный workflow собирает или переиспользует свой компонент и необходимые зависимости, но публикует только свой компонент. Комплект может загрузить его JAR из Releases соответствующего репозитория при совпадении ревизии и содержимого исходников, версии, инструментов сборки, сборочных команд и контрольных сумм зависимостей. Кэши репозиториев независимы; обмен готовыми JAR между репозиториями выполняется через Releases. Nightly принимает подходящие релизные и nightly-артефакты, обычный релиз — только релизные, включая зависимости. Параметр `force_rebuild` отключает переиспользование готовых JAR и сохраняет Gradle-кэш. При изменении общего формата артефактов поддерживайте одинаковые `.github/scripts/suite.py`, `suite_bundle.py` и `release.py` во всех четырёх репозиториях.
 
 Для локального запуска `act` подготовьте совместимые исходники зависимостей в `.dependencies/aopui`, `.dependencies/thaumcraft`, `.dependencies/tinkerer`, затем выполните `act workflow_dispatch --input release=true`. Локальная проверка использует эти каталоги и пропускает публикацию на GitHub. Для приватных зависимостей задайте необязательный секрет `DEPENDENCY_TOKEN` с правом чтения соответствующих репозиториев.
 
@@ -89,14 +92,16 @@ GitHub workflow запускается при изменении исходни�
 
 | Переменная репозитория | Назначение / значение по умолчанию |
 | --- | --- |
-| `THAUMCRAFT_REPOSITORY` | Исходники ядра; `Salossov/aop-thaumcraft-4` |
+| `THAUMCRAFT_REPOSITORY` | Исходники ядра; `Salossov/AOP-Thaumcraft-4` |
 | `THAUMCRAFT_REF` | Ревизия ядра; `main` |
-| `TINKERER_REPOSITORY` | Исходники Tinkerer; `Salossov/aoptc4-thaumic-tinkerer` |
+| `TINKERER_REPOSITORY` | Исходники Tinkerer; `Salossov/AOPTC4-Thaumic-Tinkerer` |
 | `TINKERER_REF` | Ревизия Tinkerer; `main` |
-| `AOPUI_REPOSITORY` | Исходники AOP: UI; `Salossov/aop-ui` |
+| `AOPUI_REPOSITORY` | Исходники AOP: UI; `Salossov/AOP-UI` |
 | `AOPUI_REF` | Ревизия AOP: UI; `main` |
 
 Для всех зависимостей выбираются совместимые ревизии. Загрузка приватных репозиториев требует токен с правом чтения.
+
+Compact и полная suite автоматически получают исходники Thaumic Energistics и собирают его после UI/ядра, до Compact. Переменные URL/SHA архива не нужны. Ревизия, содержимое исходников и хеш JAR ThE входят в ключ кеша Compact; ThE не встраивается в Compact. Пока репозиторий ThE закрыт, `DEPENDENCY_TOKEN` также нужен Contents read для него. Источник можно переопределить через `THAUMIC_ENERGISTICS_REPOSITORY` / `THAUMIC_ENERGISTICS_REF`. Для локального `act` нужны `.dependencies/thaumicenergistics` либо `SUITE_THE_ROOT`. Suite публикует прежние четыре компонента; ThE выпускается отдельно.
 
 ## Авторы и условия использования
 

@@ -22,7 +22,7 @@ neoForge {
     version = project.neo_version
     addModdingDependenciesTo sourceSets.test
     addModdingDependenciesTo sourceSets.verification
-    mods { thaumcraft_viewers { sourceSet sourceSets.main; sourceSet sourceSets.verification } }
+    mods { thaumcraft_compact { sourceSet sourceSets.main; sourceSet sourceSets.verification } }
     runs {
         gameTestServer {
             type = 'gameTestServer'
@@ -42,11 +42,11 @@ repositories {
     maven { url = 'https://modmaven.dev/' }
 }
 def apiJar = file(providers.gradleProperty('thaumcraftApiJar').getOrElse("libs/thaumcraft-api-${project.thaumcraft_version}.jar"))
-def tinkererJar = file(providers.gradleProperty('tinkererJar').getOrElse('libs/ThaumicTinkerer-1.21.1-1.0.0.jar'))
+def tinkererJar = file(providers.gradleProperty('tinkererJar').getOrElse('libs/ThaumicTinkerer-1.21.1-1.1.0.jar'))
 def thaumicEnergisticsJar = file(providers.gradleProperty('thaumicEnergisticsJar')
-        .getOrElse('../../port_addons/ThaumicEnergistics/repo/build/libs/thaumicenergistics-1.21.1-1.1.3.0-port.1.jar'))
+        .getOrElse('../../port_addons/ThaumicEnergistics/repo/build/libs/thaumicenergistics-1.21.1-1.0.0.jar'))
 dependencies {
-    implementation files(providers.gradleProperty('aopUiJar').getOrElse('libs/aopui-1.21.1-0.7.0.jar'))
+    implementation files(providers.gradleProperty('aopUiJar').getOrElse('libs/aopui-1.21.1-0.8.0.jar'))
     if (findProject(':api') != null) {
         compileOnly project(':api')
         testImplementation project(':api')
@@ -56,7 +56,7 @@ dependencies {
     }
     compileOnly files(tinkererJar)
     compileOnly files(thaumicEnergisticsJar)
-    compileOnly 'org.appliedenergistics:appliedenergistics2:19.2.18'
+    compileOnly 'appeng:appliedenergistics2:19.0.24'
     compileOnly 'mezz.jei:jei-1.21.1-common-api:19.8.4.110'
     compileOnly 'mezz.jei:jei-1.21.1-neoforge-api:19.8.4.110'
     compileOnly 'dev.emi:emi-neoforge:1.1.13+1.21.1:api'
@@ -70,7 +70,7 @@ dependencies {
     testRuntimeOnly "dev.emi:emi-neoforge:${emiVersions[profile]}"
     verificationRuntimeOnly files(providers.gradleProperty('thaumcraftRuntimeJar').getOrElse("libs/thaumcraft-1.21.1-${project.thaumcraft_version}.jar"))
     if (!providers.gradleProperty('withoutTinkerer').map { it.toBoolean() }.getOrElse(false)) verificationRuntimeOnly files(tinkererJar)
-    verificationRuntimeOnly 'top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1'
+    verificationRuntimeOnly 'top.theillusivec4.curios:curios-neoforge:9.5.0+1.21.1'
     if (providers.gradleProperty('withJade').map { it.toBoolean() }.getOrElse(false)) verificationRuntimeOnly 'maven.modrinth:jade:15.10.1+neoforge'
     if (providers.gradleProperty('withWthit').map { it.toBoolean() }.getOrElse(false)) {
         verificationRuntimeOnly 'mcp.mobius.waila:wthit:neo-12.5.5'
@@ -78,7 +78,7 @@ dependencies {
     }
     if (providers.gradleProperty('withThaumicEnergistics').map { it.toBoolean() }.getOrElse(false)) {
         verificationRuntimeOnly files(thaumicEnergisticsJar)
-        verificationRuntimeOnly 'org.appliedenergistics:appliedenergistics2:19.2.18'
+        verificationRuntimeOnly 'appeng:appliedenergistics2:19.0.24'
     }
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

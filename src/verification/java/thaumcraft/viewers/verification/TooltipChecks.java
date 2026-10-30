@@ -28,7 +28,7 @@ public final class TooltipChecks {
     }
     @GameTest(template="empty", templateNamespace="thaumcraft_viewers", timeoutTicks=100)
     public static void discoversOptionalTinkererProviders(GameTestHelper helper) {
-        if (!ModList.get().isLoaded("thaumictinkerer")) { helper.succeed(); return; }
+        if (!ModList.get().isLoaded("thaumictinkerer_aop")) { helper.succeed(); return; }
         var pos = helper.absolutePos(new BlockPos(1,1,1));
         helper.getLevel().setBlockAndUpdate(pos,AnimationTabletContent.BLOCK.get().defaultBlockState());
         var tile=helper.getLevel().getBlockEntity(pos);

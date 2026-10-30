@@ -16,7 +16,7 @@ import snownee.jade.api.ui.Element;
 import snownee.jade.api.ui.IElement;
 import snownee.jade.api.ui.IElementHelper;
 
-@WailaPlugin("thaumicenergistics")
+@WailaPlugin("thaumicenergistics_aop")
 public final class JadeCompatibility implements IWailaPlugin {
     public static final Provider PROVIDER = new Provider();
 
